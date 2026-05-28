@@ -4,4 +4,11 @@ out/
 .env.local
 .env*.local
 *.tsbuildinfo
+node_modules/
+.next/
+out/
+.env.local
+.env*.local
+*.tsbuildinfo
 next-env.d.ts
+supabase/.temp/
