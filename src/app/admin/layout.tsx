@@ -11,6 +11,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toaster'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 
 const navItems = [
   { href: '/admin/dashboard', label: 'admin.dashboard', icon: FiGrid },
@@ -32,7 +33,7 @@ function SidebarContent({ pathname, setSidebarOpen, collapsed }: { pathname: str
     await supabase.auth.signOut()
     document.cookie = 'pp-admin-session=; path=/; max-age=0'
     addToast('Logged out successfully! 👋', 'success')
-    router.push('/admin/login')
+    router.push('/')
   }
 
   return (
@@ -93,28 +94,79 @@ function SidebarContent({ pathname, setSidebarOpen, collapsed }: { pathname: str
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const { isAuthenticated, isLoading } = useAdminAuth()
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check for admin session cookie
-        const cookies = document.cookie.split(';')
-        const adminSessionCookie = cookies.find(cookie => cookie.trim().startsWith('pp-admin-session='))
-        
-        if (adminSessionCookie) {
-          const cookieValue = adminSessionCookie.split('=')[1]
-          if (cookieValue === 'true') {
-            setIsAuthenticated(true)
-          } else {
-            setIsAuthenticated(false)
-          }
+  const toggleCollapse = () => {
+    setCollapsed((prev) => {
+      const next = !prev
+      localStorage.setItem('pp-admin-sidebar-collapsed', String(next))
+      return next
+    })
+  }
+
+  const sidebarWidth = collapsed ? 'md:w-16' : 'md:w-64 lg:w-72'
+  const marginLeft = collapsed ? 'md:ml-16' : 'md:ml-64 lg:ml-72'
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  }
+
+  if (!isAuthenticated && pathname !== '/admin/login') {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Desktop sidebar */}
+      <aside className={cn(
+        'hidden md:flex bg-white border-r border-gray-200 flex-col fixed top-0 left-0 h-full z-40 transition-all duration-300',
+        sidebarWidth
+      )}>
+        <button
+          onClick={toggleCollapse}
+          className={cn(
+            'absolute -right-3 top-6 z-50 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center hover:bg-gray-50 transition-transform duration-200',
+            collapsed && 'rotate-180'
+          )}
+        >
+          <FiChevronLeft size={14} />
+        </button>
+        <SidebarContent pathname={pathname} setSidebarOpen={setSidebarOpen} collapsed={collapsed} />
+      </aside>
+
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/40 md:hidden" onClick={() => setSidebarOpen(false)} />
+          <aside className="fixed left-0 top-0 z-50 h-full w-72 bg-white shadow-xl md:hidden">
+            <div className="flex justify-end p-2">
+              <button onClick={() => setSidebarOpen(false)} className="p-2"><FiX size={20} /></button>
+            </div>
+            <SidebarContent pathname={pathname} setSidebarOpen={setSidebarOpen} collapsed={false} />
+          </aside>
+        </>
+      )}
+
+      {/* Main content */}
+      <div className={cn('flex-1 transition-all duration-300', marginLeft)}>
+        {/* Mobile header */}
+        <div className="md:hidden flex items-center gap-3 p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+          <button onClick={() => setSidebarOpen(true)} className="p-1">
+            <FiMenu size={22} />
+          </button>
+          <span className="font-bold text-sm">Admin Panel</span>
+        </div>
+        <div className="p-4 sm:p-6 lg:p-8">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
         } else {
           setIsAuthenticated(false)
         }

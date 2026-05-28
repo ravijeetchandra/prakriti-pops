@@ -10,11 +10,13 @@ import { formatPrice, cn } from '@/lib/helpers'
 import type { Order } from '@/lib/types'
 import { FiDollarSign, FiPackage, FiShoppingCart, FiTrendingUp } from 'react-icons/fi'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { useAdminAuth } from '@/hooks/useAdminAuth'
 
 type Range = 'day' | 'week' | 'month' | 'year' | 'custom'
 
 export default function AdminDashboardPage() {
   const { t } = useLang()
+  const { isAuthenticated, isLoading: authLoading } = useAdminAuth()
   const [range, setRange] = useState<Range>('month')
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,6 +36,7 @@ export default function AdminDashboardPage() {
   }
 
   const fetchStats = useCallback(async () => {
+    if (!isAuthenticated) return
     setLoading(true)
     
     try {
@@ -61,7 +64,7 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [range])
+  }, [range, isAuthenticated])
 
   useEffect(() => {
     fetchStats()
@@ -74,67 +77,8 @@ export default function AdminDashboardPage() {
     sum + (o.items as any[]).reduce((s: number, i: any) => s + i.qty, 0), 0)
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
-  // Orders by status
-  const statusCounts: Record<string, number> = {}
-  orders.forEach((o) => {
-    statusCounts[o.status] = (statusCounts[o.status] || 0) + 1
-  })
-  const statusData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
-  const STATUS_COLORS: Record<string, string> = {
-    pending: '#F59E0B',
-    confirmed: '#3B82F6',
-    shipped: '#8B5CF6',
-    delivered: '#10B981',
-    cancelled: '#EF4444',
-  }
-
-  // Revenue by day
-  const revenueByDay: Record<string, number> = {}
-  const ordersByDay: Record<string, number> = {}
-  orders.forEach((o) => {
-    const day = new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
-    revenueByDay[day] = (revenueByDay[day] || 0) + Number(o.total)
-    ordersByDay[day] = (ordersByDay[day] || 0) + 1
-  })
-  const chartData = Object.entries(revenueByDay).map(([date, revenue]) => ({
-    date,
-    revenue,
-    orders: ordersByDay[date],
-  }))
-
-  // Top products
-  const productSales: Record<string, { name: string; qty: number; revenue: number }> = {}
-  orders.forEach((o) => {
-    ;(o.items as any[]).forEach((item: any) => {
-      const key = item.product_id || item.name_en
-      if (!productSales[key]) productSales[key] = { name: item.name_en, qty: 0, revenue: 0 }
-      productSales[key].qty += item.qty
-      productSales[key].revenue += item.price * item.qty
-    })
-  })
-  const topProducts = Object.values(productSales)
-    .sort((a, b) => b.qty - a.qty)
-    .slice(0, 5)
-
-  // Quick stats
-  const deliveredOrders = orders.filter((o) => o.status === 'delivered')
-  const avgDeliveryDays = deliveredOrders.length > 0
-    ? deliveredOrders.reduce((sum, o) => {
-        const created = new Date(o.created_at)
-        const updated = new Date(o.updated_at)
-        return sum + Math.round((updated.getTime() - created.getTime()) / (1000 * 60 * 60 * 24))
-      }, 0) / deliveredOrders.length
-    : 0
-
-  const repeatCustomers = new Set(orders.filter((o) => o.email).map((o) => o.email)).size
-  const repeatRate = orders.length > 0 && repeatCustomers > 0
-    ? ((orders.length - repeatCustomers) / orders.length * 100).toFixed(1)
-    : '0'
-
-  const codCount = orders.filter((o) => o.payment_method === 'cod').length
-  const codPercent = totalOrders > 0 ? ((codCount / totalOrders) * 100).toFixed(0) : '0'
-
-  if (loading) return <Spinner text="Crunching numbers..." />
+  if (authLoading || loading) return <Spinner text="Crunching numbers..." />
+  if (!isAuthenticated) return null
 
   return (
     <div className="space-y-6">

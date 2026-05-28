@@ -1,77 +1,57 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { useLang } from '@/lib/locale'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Card } from '@/components/ui/Card'
-import { useToast } from '@/components/ui/Toaster'
 import Link from 'next/link'
-import { FiMail, FiLock } from 'react-icons/fi'
+import { FiUser, FiShield } from 'react-icons/fi'
+import { Card } from '@/components/ui/Card'
+import { useLang } from '@/lib/locale'
 
-export default function LoginPage() {
+export default function LoginSelectionPage() {
   const { t } = useLang()
-  const router = useRouter()
-  const { addToast } = useToast()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    if (!isSupabaseConfigured) {
-      addToast('⚠️ Connect Supabase first. Use /admin/login for now.', 'error')
-      setLoading(false)
-      return
-    }
-    const normalizedEmail = email.toLowerCase().trim()
-    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
-    if (error) {
-      addToast(error.message, 'error')
-    } else {
-      addToast('Logged in! 🎉', 'success')
-      router.push('/my-account')
-      router.refresh()
-    }
-    setLoading(false)
-  }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-20">
-      <Card className="p-8">
-        <h1 className="text-2xl font-extrabold text-center text-foreground mb-6">Login</h1>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <Input
-            label="Email"
-            type="email"
-            placeholder="you@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" fullWidth disabled={loading}>
-            <FiLock size={16} className="mr-2" />
-            {loading ? t('common.loading') : 'Login'}
-          </Button>
-        </form>
-        <p className="text-center text-sm text-muted mt-6">
-          No account?{' '}
-          <Link href="/signup" className="text-primary font-semibold hover:underline">
-            Sign Up
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-20">
+      <div className="max-w-4xl w-full">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground mb-4">
+            Welcome Back!
+          </h1>
+          <p className="text-muted text-lg">Please choose your account type to continue</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          {/* User Login Option */}
+          <Link href="/login/user" className="group">
+            <Card className="h-full p-8 flex flex-col items-center text-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-2 border-2 border-transparent group-hover:border-primary/20">
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <FiUser size={40} />
+              </div>
+              <h2 className="text-2xl font-bold mb-3">User Login</h2>
+              <p className="text-muted mb-8">
+                Access your account, track your orders, and manage your profile.
+              </p>
+              <div className="mt-auto w-full py-3 rounded-xl bg-primary text-white font-semibold group-hover:bg-primary-dark transition-colors">
+                Login as User
+              </div>
+            </Card>
           </Link>
-        </p>
-      </Card>
+
+          {/* Admin Login Option */}
+          <Link href="/admin/login" className="group">
+            <Card className="h-full p-8 flex flex-col items-center text-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-2 border-2 border-transparent group-hover:border-secondary/20">
+              <div className="w-20 h-20 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary mb-6 group-hover:bg-secondary group-hover:text-white transition-all duration-300">
+                <FiShield size={40} />
+              </div>
+              <h2 className="text-2xl font-bold mb-3">Admin Login</h2>
+              <p className="text-muted mb-8">
+                Manage products, orders, coupons, and site announcements.
+              </p>
+              <div className="mt-auto w-full py-3 rounded-xl bg-secondary text-white font-semibold group-hover:bg-secondary-dark transition-colors">
+                Login as Admin
+              </div>
+            </Card>
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

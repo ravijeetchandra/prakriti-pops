@@ -26,32 +26,39 @@ export default function AdminLoginPage() {
 
     const normalizedEmail = email.toLowerCase().trim()
 
-    // Try Supabase auth first
     try {
-      const { data: adminUser } = await supabase
+      // Verify that the email exists in admin_users table
+      const { data: adminUser, error: userError } = await supabase
         .from('admin_users')
         .select('*')
         .ilike('email', normalizedEmail)
         .single()
 
-      if (adminUser) {
-        const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
-        if (error) throw error
-        document.cookie = 'pp-admin-session=true; path=/; max-age=86400'
-        setIsAuthenticated(true)
-        addToast('Welcome Admin! 🧠', 'success')
-        router.push('/admin/dashboard')
-        setLoading(false)
-        return
+      if (userError || !adminUser) {
+        throw new Error('Invalid admin credentials')
       }
-    } catch {}
 
-    addToast('Invalid credentials', 'error')
-    setLoading(false)
-  }
-
-    addToast('Invalid credentials', 'error')
-    setLoading(false)
+      // Authenticate via Supabase Auth
+      const { error: authError } = await supabase.auth.signInWithPassword({ 
+        email: normalizedEmail, 
+        password 
+      })
+      
+      if (authError) throw authError
+      
+      // Set session cookie for AdminLayout check
+      document.cookie = 'pp-admin-session=true; path=/; max-age=86400'
+      
+      // Update global auth state
+      setIsAuthenticated(true)
+      
+      addToast('Welcome Admin! 🧠', 'success')
+      router.push('/admin/dashboard')
+    } catch (error: any) {
+      addToast(error.message || 'Invalid credentials', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
