@@ -75,6 +75,9 @@ CREATE POLICY "Admins can manage campaigns" ON campaigns FOR ALL TO authenticate
 );
 
 -- 10. Admin Users: Only admins can read/write
+CREATE POLICY "Admins can view their own admin profile" ON admin_users FOR SELECT TO authenticated USING (
+  email = auth.jwt() ->> 'email'
+);
 CREATE POLICY "Admins can manage admin users" ON admin_users FOR ALL TO authenticated USING (
   EXISTS (SELECT 1 FROM admin_users WHERE email = auth.jwt() ->> 'email')
 );

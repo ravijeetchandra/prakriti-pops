@@ -56,12 +56,12 @@ function SidebarContent({ pathname, setSidebarOpen, collapsed }: { pathname: str
               <button
                 key="logout"
                 onClick={() => { handleLogout(); setSidebarOpen(false) }}
-                    className={cn(
-                      'group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-colors duration-200 cursor-pointer hover:font-bold',
-                      collapsed ? 'justify-center' : '',
-                      'text-red-600 hover:bg-red-50/10',
-                      isActive && 'bg-red-50/20'
-                    )}
+                className={cn(
+                  'group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-colors duration-200 cursor-pointer hover:font-bold',
+                  collapsed ? 'justify-center' : '',
+                  'text-red-600 hover:bg-red-50/10',
+                  isActive && 'bg-red-50/20'
+                )}
                 title="Logout"
               >
                 <Icon size={18} className="min-w-[18px] transition-all group-hover:stroke-[2px]" />
@@ -95,7 +95,6 @@ function SidebarContent({ pathname, setSidebarOpen, collapsed }: { pathname: str
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const { isAuthenticated, isLoading } = useAdminAuth()
@@ -118,95 +117,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (!isAuthenticated && pathname !== '/admin/login') {
     return null
   }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Desktop sidebar */}
-      <aside className={cn(
-        'hidden md:flex bg-white border-r border-gray-200 flex-col fixed top-0 left-0 h-full z-40 transition-all duration-300',
-        sidebarWidth
-      )}>
-        <button
-          onClick={toggleCollapse}
-          className={cn(
-            'absolute -right-3 top-6 z-50 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center hover:bg-gray-50 transition-transform duration-200',
-            collapsed && 'rotate-180'
-          )}
-        >
-          <FiChevronLeft size={14} />
-        </button>
-        <SidebarContent pathname={pathname} setSidebarOpen={setSidebarOpen} collapsed={collapsed} />
-      </aside>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/40 md:hidden" onClick={() => setSidebarOpen(false)} />
-          <aside className="fixed left-0 top-0 z-50 h-full w-72 bg-white shadow-xl md:hidden">
-            <div className="flex justify-end p-2">
-              <button onClick={() => setSidebarOpen(false)} className="p-2"><FiX size={20} /></button>
-            </div>
-            <SidebarContent pathname={pathname} setSidebarOpen={setSidebarOpen} collapsed={false} />
-          </aside>
-        </>
-      )}
-
-      {/* Main content */}
-      <div className={cn('flex-1 transition-all duration-300', marginLeft)}>
-        {/* Mobile header */}
-        <div className="md:hidden flex items-center gap-3 p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
-          <button onClick={() => setSidebarOpen(true)} className="p-1">
-            <FiMenu size={22} />
-          </button>
-          <span className="font-bold text-sm">Admin Panel</span>
-        </div>
-        <div className="p-4 sm:p-6 lg:p-8">
-          {children}
-        </div>
-      </div>
-    </div>
-  )
-}
-        } else {
-          setIsAuthenticated(false)
-        }
-      } catch (error) {
-        console.error('Auth check error:', error)
-        setIsAuthenticated(false)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [])
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && pathname !== '/admin/login') {
-      router.push('/admin/login')
-    }
-  }, [isLoading, isAuthenticated, pathname, router])
-
-  // If not authenticated, redirect to login page
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
-  }
-
-  // Redirect to login page if not authenticated and not already on login page
-  if (!isAuthenticated && pathname !== '/admin/login') {
-    return null
-  }
-
-  const toggleCollapse = () => {
-    setCollapsed((prev) => {
-      const next = !prev
-      localStorage.setItem('pp-admin-sidebar-collapsed', String(next))
-      return next
-    })
-  }
-
-  const sidebarWidth = collapsed ? 'md:w-16' : 'md:w-64 lg:w-72'
-  const marginLeft = collapsed ? 'md:ml-16' : 'md:ml-64 lg:ml-72'
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

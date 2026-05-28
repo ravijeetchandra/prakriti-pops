@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/store/authStore'
 
 export function useAdminAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { isAuthenticated, setIsAuthenticated } = useAuthStore()
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
@@ -35,7 +36,7 @@ export function useAdminAuth() {
     }
 
     checkAuth()
-  }, [pathname])
+  }, [pathname, setIsAuthenticated])
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && pathname !== '/admin/login') {
