@@ -10,6 +10,7 @@ import { formatPrice, getStatusColor, getStatusLabel } from '@/lib/helpers'
 import type { Order, OrderTimeline } from '@/lib/types'
 import { FiSearch, FiClock, FiCheckCircle, FiTruck, FiPackage, FiX, FiMail, FiHash } from 'react-icons/fi'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const statusIcons: Record<string, React.ReactNode> = {
   pending: <FiClock size={20} />,
@@ -29,9 +30,7 @@ export default function TrackOrderPage() {
   const [searched, setSearched] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  // Show recent orders from this device
   useEffect(() => {
-    const lastOrder = localStorage.getItem('pp-last-order')
     const sessionId = localStorage.getItem('pp-guest-session')
     if (sessionId) {
       supabase
@@ -102,134 +101,229 @@ export default function TrackOrderPage() {
   }
 
   const renderOrderCard = (order: Order & { timeline?: OrderTimeline[] }) => (
-    <Card key={order.id} className="p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-muted">
-          {t('checkout.order_id')}: <strong className="text-foreground">{order.order_id}</strong>
-        </span>
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)}`}>
-          {getStatusLabel(order.status, lang)}
-        </span>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-2 text-sm mb-3">
-        <div><span className="text-muted">Name:</span> {order.customer_name}</div>
-        <div><span className="text-muted">Phone:</span> {order.customer_phone}</div>
-        <div><span className="text-muted">Total:</span> <span className="font-bold text-primary">{formatPrice(order.total)}</span></div>
-        <div><span className="text-muted">Date:</span> {new Date(order.created_at).toLocaleDateString('en-IN')}</div>
-      </div>
-
-      <div className="text-sm mb-3">
-        <span className="text-muted">Items:</span>
-        <ul className="mt-1 space-y-1">
-          {order.items.map((item: any, i: number) => (
-            <li key={i} className="flex justify-between">
-              <span>{item.name_en} x{item.qty}</span>
-              <span>{formatPrice(item.price * item.qty)}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <button
-        onClick={() => loadTimeline(order.id)}
-        className="text-sm text-primary font-semibold hover:text-primary-dark"
-      >
-        {expandedId === order.id ? 'Hide Timeline ▲' : 'Show Timeline ▼'}
-      </button>
-
-      {/* Timeline */}
-      {expandedId === order.id && order.timeline && order.timeline.length > 0 && (
-        <div className="mt-4 border-t pt-4 space-y-3">
-          {order.timeline.map((entry) => (
-            <div key={entry.id} className="flex items-center gap-3 text-sm">
-              <span className="text-primary">{statusIcons[entry.status] || <FiClock size={16} />}</span>
-              <span className="flex-1">{getStatusLabel(entry.status, lang)}</span>
-              {entry.note && <span className="text-xs text-muted">— {entry.note}</span>}
-              <span className="text-xs text-muted">
-                {new Date(entry.created_at).toLocaleDateString('en-IN')}
-              </span>
-            </div>
-          ))}
+    <motion.div
+      key={order.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full"
+    >
+      <Card className="p-6 bg-white border-none shadow-sm hover:shadow-md transition-shadow duration-300 group">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getStatusColor(order.status).replace('text-', 'bg-').replace('bg-', 'bg-opacity-10 text-')}`}>
+               {statusIcons[order.status] || <FiClock size={20} />}
+             </div>
+             <div>
+               <p className="text-xs text-muted uppercase tracking-widest">Order ID</p>
+               <p className="font-bold text-foreground">{order.order_id}</p>
+             </div>
+          </div>
+          <span className={`px-4 py-1 rounded-full text-xs font-bold shadow-sm ${getStatusColor(order.status)}`}>
+            {getStatusLabel(order.status, lang)}
+          </span>
         </div>
-      )}
-    </Card>
+
+        <div className="grid sm:grid-cols-3 gap-6 text-sm mb-6 py-4 border-y border-gray-50">
+          <div>
+            <p className="text-muted mb-1">Customer</p>
+            <p className="font-semibold text-foreground">{order.customer_name}</p>
+          </div>
+          <div>
+            <p className="text-muted mb-1">Order Value</p>
+            <p className="font-bold text-primary">{formatPrice(order.total)}</p>
+          </div>
+          <div>
+            <p className="text-muted mb-1">Date Placed</p>
+            <p className="font-semibold text-foreground">{new Date(order.created_at).toLocaleDateString('en-IN')}</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-xs text-muted uppercase tracking-widest mb-3">Ordered Items</p>
+          <div className="space-y-2">
+            {order.items.map((item: any, i: number) => (
+              <div key={i} className="flex justify-between items-center text-sm">
+                <span className="text-foreground font-medium">{item.name_en} <span className="text-muted font-light">x{item.qty}</span></span>
+                <span className="text-muted">{formatPrice(item.price * item.qty)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={() => loadTimeline(order.id)}
+          className="w-full py-3 rounded-xl bg-cream text-primary font-bold text-sm hover:bg-primary hover:text-white transition-all duration-300 flex items-center justify-center gap-2"
+        >
+          {expandedId === order.id ? 'Hide Timeline' : 'Track Progress'}
+          <span>{expandedId === order.id ? '▲' : '▼'}</span>
+        </button>
+
+        <AnimatePresence>
+          {expandedId === order.id && order.timeline && order.timeline.length > 0 && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-6 pt-6 border-t border-gray-100 space-y-6 relative">
+                {/* Timeline Line */}
+                <div className="absolute left-5 top-6 bottom-6 w-0.5 bg-gray-100" />
+                
+                {order.timeline.map((entry, idx) => (
+                  <div key={entry.id} className="flex items-start gap-6 relative z-10">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${idx === order.timeline.length - 1 ? 'bg-primary text-white' : 'bg-white text-primary border border-primary/20'}`}>
+                      {statusIcons[entry.status] || <FiClock size={16} />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold text-foreground text-sm">{getStatusLabel(entry.status, lang)}</p>
+                        <span className="text-xs text-muted font-light">
+                          {new Date(entry.created_at).toLocaleDateString('en-IN')}
+                        </span>
+                      </div>
+                      {entry.note && <p className="text-xs text-muted mt-1 font-light">{entry.note}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+    </motion.div>
   )
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-extrabold text-foreground">{t('track.title')}</h1>
-        <p className="text-muted mt-2">{t('track.subtitle')}</p>
-      </div>
-
-      {/* Search */}
-      <Card className="p-6 mb-8">
-        <div className="flex gap-2 mb-4">
-          <div className="flex-1">
-            <Input
-              placeholder={
-                mode === 'email'
-                  ? t('track.placeholder_email')
-                  : mode === 'order_id'
-                  ? t('track.placeholder_order')
-                  : 'Email or Order ID (PP-1032)'
-              }
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
-                setMode(detectMode(e.target.value))
-              }}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-          <Button onClick={handleSearch} disabled={loading}>
-            <FiSearch size={18} className="mr-1.5" />
-            {t('track.search_btn')}
-          </Button>
+    <div className="bg-cream min-h-screen">
+      {/* Header */}
+      <section className="bg-secondary text-white py-20 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/40 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-accent/30 rounded-full blur-3xl" />
         </div>
-        <p className="text-xs text-muted">
-          <FiMail size={12} className="inline mr-1" />
-          {t('track.search_email')} &nbsp;|&nbsp; <FiHash size={12} className="inline mr-1" />
-          {t('track.search_order')}
-        </p>
-      </Card>
-
-      {/* Recent orders */}
-      {!searched && recentOrders.length > 0 && (
-        <div className="mb-8">
-          <h2 className="font-bold text-lg mb-4">{t('track.recent_title')}</h2>
-          <div className="space-y-4">
-            {recentOrders.map(renderOrderCard)}
-          </div>
+        <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl md:text-6xl font-serif font-bold mb-4"
+          >
+            {t('track.title')}
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-white/80 font-light"
+          >
+            {t('track.subtitle')}
+          </motion.p>
         </div>
-      )}
+      </section>
 
-      {/* Search results */}
-      {searched && (
-        <div>
-          {loading ? (
-            <p className="text-center text-muted">{t('common.loading')}</p>
-          ) : orders.length > 0 ? (
-            <div className="space-y-4">
-              {orders.map(renderOrderCard)}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Search Area */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-16"
+        >
+          <Card className="p-8 bg-white border-none shadow-xl rounded-[2rem] relative z-10">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <Input
+                  placeholder={
+                    mode === 'email'
+                      ? t('track.placeholder_email')
+                      : mode === 'order_id'
+                      ? t('track.placeholder_order')
+                      : 'Email or Order ID (PP-1032)'
+                  }
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value)
+                    setMode(detectMode(e.target.value))
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="h-12 rounded-xl"
+                />
+              </div>
+              <Button onClick={handleSearch} disabled={loading} size="lg" className="h-12 px-8 rounded-xl shadow-lg shadow-primary/20 btn-premium">
+                <FiSearch size={18} className="mr-2" />
+                {t('track.search_btn')}
+              </Button>
             </div>
-          ) : (
-            <Card className="p-8 text-center">
-              <p className="text-4xl mb-3">😅</p>
-              <p className="text-muted">{t('track.no_orders')}</p>
-            </Card>
-          )}
-        </div>
-      )}
+            <div className="flex items-center justify-center gap-4 text-xs text-muted font-medium">
+              <div className="flex items-center gap-1">
+                <FiMail size={14} className="text-primary" />
+                {t('track.search_email')}
+              </div>
+              <span className="text-gray-300">•</span>
+              <div className="flex items-center gap-1">
+                <FiHash size={14} className="text-primary" />
+                {t('track.search_order')}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
 
-      {!searched && recentOrders.length === 0 && (
-        <div className="text-center py-10">
-          <Link href="/shop">
-            <Button variant="primary">Start Shopping →</Button>
-          </Link>
-        </div>
-      )}
+        {/* Recent Orders */}
+        {!searched && recentOrders.length > 0 && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-serif text-2xl font-bold text-foreground">{t('track.recent_title')}</h2>
+              <div className="h-px flex-1 bg-gray-200 mx-4" />
+            </div>
+            <div className="space-y-6">
+              {recentOrders.map(renderOrderCard)}
+            </div>
+          </div>
+        )}
+
+        {/* Search Results */}
+        {searched && (
+          <div className="space-y-6">
+            {loading ? (
+              <div className="text-center py-20">
+                <Spinner text={t('common.loading')} />
+              </div>
+            ) : orders.length > 0 ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-serif text-2xl font-bold text-foreground">Search Results</h2>
+                  <div className="h-px flex-1 bg-gray-200 mx-4" />
+                </div>
+                {orders.map(renderOrderCard)}
+              </div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white p-12 text-center rounded-[2rem] shadow-sm border border-gray-100"
+              >
+                <p className="text-6xl mb-4">😅</p>
+                <p className="text-lg text-muted font-light">{t('track.no_orders')}</p>
+                <Button variant="outline" className="mt-6 rounded-full" onClick={() => setSearched(false)}>
+                  Try again
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        {!searched && recentOrders.length === 0 && (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-6">📦</div>
+            <h3 className="text-2xl font-serif font-bold mb-4">No recent orders found</h3>
+            <Link href="/shop">
+              <Button variant="primary" size="lg" className="px-10 py-4 rounded-full shadow-xl shadow-primary/20 btn-premium">
+                Start Shopping →
+              </Button>
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

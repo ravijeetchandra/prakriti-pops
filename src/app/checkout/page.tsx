@@ -14,6 +14,7 @@ import { useCampaigns } from '@/lib/campaigns'
 import Link from 'next/link'
 import { FiLock, FiTag, FiZap } from 'react-icons/fi'
 import { v4 as uuidv4 } from 'uuid'
+import { motion } from 'framer-motion'
 
 export default function CheckoutPage() {
   const { t, lang } = useLang()
@@ -38,10 +39,20 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-        <p className="text-6xl mb-6">🥲</p>
-        <h1 className="text-2xl font-bold mb-2">{t('cart.empty')}</h1>
-        <Link href="/shop"><Button className="mt-6">{t('cart.empty_cta')} →</Button></Link>
+      <div className="bg-cream min-h-screen flex items-center justify-center px-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-3xl mx-auto text-center space-y-6"
+        >
+          <div className="text-8xl mb-6">🛒</div>
+          <h1 className="text-4xl font-serif font-bold text-foreground mb-2">{t('cart.empty')}</h1>
+          <Link href="/shop">
+            <Button variant="primary" size="lg" className="px-10 py-4 rounded-full shadow-xl shadow-primary/20 btn-premium">
+              {t('cart.empty_cta')} →
+            </Button>
+          </Link>
+        </motion.div>
       </div>
     )
   }
@@ -174,128 +185,173 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h1 className="text-3xl font-extrabold text-foreground mb-8">{t('checkout.title')}</h1>
+    <div className="bg-cream min-h-screen">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <motion.h1 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-12"
+        >
+          {t('checkout.title')}
+        </motion.h1>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6">
-              <h2 className="font-bold text-lg mb-4">{t('checkout.guest_info')}</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Input
-                  label={t('checkout.name')}
-                  placeholder="Rajesh Kumar"
-                  value={form.name}
-                  onChange={(e) => updateField('name', e.target.value)}
-                  error={errors.name}
-                />
-                <Input
-                  label={t('checkout.phone')}
-                  placeholder="9876543210"
-                  value={form.phone}
-                  onChange={(e) => updateField('phone', e.target.value)}
-                  error={errors.phone}
-                />
-                <div className="sm:col-span-2">
-                  <Input
-                    label={t('checkout.email')}
-                    type="email"
-                    placeholder="rajesh@email.com"
-                    value={form.email}
-                    onChange={(e) => updateField('email', e.target.value)}
-                    error={errors.email}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Input
-                    label={t('checkout.address')}
-                    placeholder="123, MG Road, Patna"
-                    value={form.address}
-                    onChange={(e) => updateField('address', e.target.value)}
-                    error={errors.address}
-                  />
-                </div>
-                <Input
-                  label={t('checkout.pincode')}
-                  placeholder="800001"
-                  value={form.pincode}
-                  onChange={(e) => updateField('pincode', e.target.value)}
-                  error={errors.pincode}
-                />
-                <Input
-                  label={t('checkout.notes')}
-                  placeholder="Gate code, landmark..."
-                  value={form.notes}
-                  onChange={(e) => updateField('notes', e.target.value)}
-                />
-              </div>
-            </Card>
-
-            {campaigns.length > 0 && items.some((i) => i.campaign_id) && (
-              <Card className="p-4 bg-green-50 border border-green-200">
-                <div className="flex items-start gap-3">
-                  <FiZap size={20} className="text-yellow-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold text-green-800">Campaign Discount Applied</p>
-                    <p className="text-xs text-green-600 mt-1">
-                      Selected items are priced with active campaign discounts.
-                    </p>
+        <form onSubmit={handleSubmit}>
+          <div className="grid lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="p-8 bg-white border-none shadow-sm rounded-[2rem]">
+                  <h2 className="font-serif text-2xl font-bold mb-8 text-foreground border-b pb-4">
+                    {t('checkout.guest_info')}
+                  </h2>
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    <Input
+                      label={t('checkout.name')}
+                      placeholder="Rajesh Kumar"
+                      value={form.name}
+                      onChange={(e) => updateField('name', e.target.value)}
+                      error={errors.name}
+                    />
+                    <Input
+                      label={t('checkout.phone')}
+                      placeholder="9876543210"
+                      value={form.phone}
+                      onChange={(e) => updateField('phone', e.target.value)}
+                      error={errors.phone}
+                    />
+                    <div className="sm:col-span-2">
+                      <Input
+                        label={t('checkout.email')}
+                        type="email"
+                        placeholder="rajesh@email.com"
+                        value={form.email}
+                        onChange={(e) => updateField('email', e.target.value)}
+                        error={errors.email}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Input
+                        label={t('checkout.address')}
+                        placeholder="123, MG Road, Patna"
+                        value={form.address}
+                        onChange={(e) => updateField('address', e.target.value)}
+                        error={errors.address}
+                      />
+                    </div>
+                    <Input
+                      label={t('checkout.pincode')}
+                      placeholder="800001"
+                      value={form.pincode}
+                      onChange={(e) => updateField('pincode', e.target.value)}
+                      error={errors.pincode}
+                    />
+                    <Input
+                      label={t('checkout.notes')}
+                      placeholder="Gate code, landmark..."
+                      value={form.notes}
+                      onChange={(e) => updateField('notes', e.target.value)}
+                    />
                   </div>
-                </div>
-              </Card>
-            )}
-          </div>
+                </Card>
+              </motion.div>
 
-          <div className="lg:col-span-1">
-            <Card className="p-6 sticky top-24 space-y-6">
-              <h2 className="font-bold text-lg">Summary</h2>
+              {campaigns.length > 0 && items.some((i) => i.campaign_id) && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <Card className="p-6 bg-green-50 border border-green-100 rounded-2xl flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-green-700 shrink-0">
+                      <FiZap size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-green-800 uppercase tracking-wide">Campaign Discount Applied</p>
+                      <p className="text-xs text-green-600 mt-1 font-light">
+                        Your order includes items from an active campaign. Discounts have been applied automatically.
+                      </p>
+                    </div>
+                  </Card>
+                </motion.div>
+              )}
+            </div>
 
-              <div>
-                <label className="text-sm font-medium mb-1 block">{t('checkout.apply_coupon')}</label>
-                <div className="flex gap-2">
-                  <input
-                    placeholder={t('checkout.coupon_placeholder')}
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                  <button type="button" onClick={applyCoupon} className="p-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
-                    <FiTag size={18} />
-                  </button>
-                </div>
-                {couponMsg && (
-                  <p className={`text-xs mt-1 ${couponMsg.includes('🤑') ? 'text-green-600' : 'text-red-500'}`}>
-                    {couponMsg}
+            <div className="lg:col-span-1">
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="sticky top-24"
+              >
+                <Card className="p-8 bg-white border-none shadow-xl rounded-[2rem] space-y-8">
+                  <h2 className="font-serif text-2xl font-bold text-foreground border-b pb-4">Summary</h2>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-bold text-muted uppercase tracking-widest mb-2 block">
+                        {t('checkout.apply_coupon')}
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          placeholder={t('checkout.coupon_placeholder')}
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          className="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-cream"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={applyCoupon} 
+                          className="p-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-all active:scale-95 shadow-lg shadow-primary/20"
+                        >
+                          <FiTag size={18} />
+                        </button>
+                      </div>
+                      {couponMsg && (
+                        <p className={`text-xs mt-2 font-medium ${couponMsg.includes('🤑') || couponMsg === t('checkout.coupon_applied') ? 'text-green-600' : 'text-red-500'}`}>
+                          {couponMsg}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-3 py-4 border-t border-gray-100">
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted font-light">{t('cart.subtotal')}</span>
+                        <span className="font-semibold text-foreground">{formatPrice(subtotal())}</span>
+                      </div>
+                      {couponDiscount > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted font-light">{t('cart.discount')}</span>
+                          <span className="font-bold text-green-600">-{formatPrice(couponDiscount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted font-light">Delivery</span>
+                        <span className="font-bold text-green-600 uppercase text-xs tracking-widest">Free</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-100 pt-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-lg font-medium text-muted">Total Amount</span>
+                      <span className="text-3xl font-serif font-bold text-primary">{formatPrice(total)}</span>
+                    </div>
+                  </div>
+
+                  <Button type="submit" size="lg" fullWidth disabled={submitting} className="py-4 rounded-2xl shadow-xl shadow-primary/20 btn-premium flex items-center justify-center gap-3">
+                    <FiLock size={20} />
+                    <span className="text-lg">{submitting ? t('common.loading') : t('checkout.place_order')}</span>
+                  </Button>
+
+                  <p className="text-center text-xs text-muted font-light">
+                    Safe & Secure Order Processing
                   </p>
-                )}
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted">{t('cart.subtotal')}</span><span>{formatPrice(subtotal())}</span></div>
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between"><span className="text-muted">{t('cart.discount')}</span><span className="text-green-600">-{formatPrice(couponDiscount)}</span></div>
-                )}
-                <div className="flex justify-between"><span className="text-muted">Delivery</span><span className="text-green-600">Free</span></div>
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="flex justify-between text-lg font-bold">
-                  <span>{t('cart.total')}</span>
-                  <span className="text-primary">{formatPrice(total)}</span>
-                </div>
-              </div>
-
-              <Button type="submit" size="lg" fullWidth disabled={submitting}>
-                <FiLock size={16} className="mr-2" />
-                {submitting ? t('common.loading') : t('checkout.place_order')}
-              </Button>
-
-              <p className="text-xs text-muted text-center">Secure. No login required.</p>
-            </Card>
+                </Card>
+              </motion.div>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }
