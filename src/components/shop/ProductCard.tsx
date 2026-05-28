@@ -74,7 +74,7 @@ export default function ProductCard({ product, campaigns = [] }: ProductCardProp
             <span className="text-xl font-extrabold text-primary">{formatPrice(displayPrice)}</span>
             {(discounted || (product.compare_price && product.compare_price > product.price)) && (
               <span className="text-sm text-muted line-through font-medium">
-                {formatPrice(discounted ? product.price : product.compare_price)}
+                {formatPrice(discounted ? product.price : (product.compare_price ?? product.price))}
               </span>
             )}
           </div>
