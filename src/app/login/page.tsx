@@ -27,7 +27,8 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const normalizedEmail = email.toLowerCase().trim()
+    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
     if (error) {
       addToast(error.message, 'error')
     } else {

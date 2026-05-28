@@ -9,11 +9,13 @@ import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { useToast } from '@/components/ui/Toaster'
 import { FiLock, FiShield } from 'react-icons/fi'
+import { useAuthStore } from '@/store/authStore'
 
 export default function AdminLoginPage() {
   const { t } = useLang()
   const router = useRouter()
   const { addToast } = useToast()
+  const setIsAuthenticated = useAuthStore((s) => s.setIsAuthenticated)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,24 +24,31 @@ export default function AdminLoginPage() {
     e.preventDefault()
     setLoading(true)
 
+    const normalizedEmail = email.toLowerCase().trim()
+
     // Try Supabase auth first
     try {
       const { data: adminUser } = await supabase
         .from('admin_users')
         .select('*')
-        .eq('email', email)
+        .ilike('email', normalizedEmail)
         .single()
 
       if (adminUser) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
         if (error) throw error
         document.cookie = 'pp-admin-session=true; path=/; max-age=86400'
+        setIsAuthenticated(true)
         addToast('Welcome Admin! 🧠', 'success')
         router.push('/admin/dashboard')
         setLoading(false)
         return
       }
     } catch {}
+
+    addToast('Invalid credentials', 'error')
+    setLoading(false)
+  }
 
     addToast('Invalid credentials', 'error')
     setLoading(false)
