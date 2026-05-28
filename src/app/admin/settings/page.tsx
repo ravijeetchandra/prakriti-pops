@@ -73,9 +73,9 @@ export default function AdminSettingsPage() {
 
       if (error) throw error
       addToast('Settings saved to database!', 'success')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving settings:', err)
-      addToast('Failed to save settings', 'error')
+      addToast(`Failed to save settings: ${err.message || 'Unknown error'}`, 'error')
     } finally {
       setLoading(false)
     }
