@@ -170,9 +170,9 @@ export default function TrackOrderPage() {
                 {/* Timeline Line */}
                 <div className="absolute left-5 top-6 bottom-6 w-0.5 bg-gray-100" />
                 
-                {order.timeline.map((entry, idx) => (
+                {order.timeline?.map((entry, idx) => (
                   <div key={entry.id} className="flex items-start gap-6 relative z-10">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${idx === order.timeline.length - 1 ? 'bg-primary text-white' : 'bg-white text-primary border border-primary/20'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${idx === (order.timeline?.length || 0) - 1 ? 'bg-primary text-white' : 'bg-white text-primary border border-primary/20'}`}>
                       {statusIcons[entry.status] || <FiClock size={16} />}
                     </div>
                     <div className="flex-1">
