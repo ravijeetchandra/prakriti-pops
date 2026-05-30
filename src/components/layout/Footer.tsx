@@ -3,9 +3,18 @@
 import { useLang } from '@/lib/locale'
 import { FiInstagram, FiFacebook, FiTwitter, FiMail, FiPhone } from 'react-icons/fi'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export default function Footer() {
   const { t } = useLang()
+  const [settings, setSettings] = useState({ contact_email: '', contact_phone: '' })
+
+  useEffect(() => {
+    supabase.from('site_settings').select('contact_email,contact_phone').single().then(({ data }) => {
+      if (data) setSettings({ contact_email: data.contact_email, contact_phone: data.contact_phone })
+    })
+  }, [])
 
   return (
     <footer className="bg-secondary text-white relative overflow-hidden">
@@ -79,16 +88,16 @@ export default function Footer() {
             </h3>
             <div className="flex flex-col gap-2 text-sm text-white/80">
               <a
-                href="mailto:hello@prakritipops.com"
+                href={`mailto:${settings.contact_email || 'hello@prakritipops.com'}`}
                 className="flex items-center gap-2 hover:text-primary-light transition-all duration-200"
               >
-                <FiMail size={14} /> hello@prakritipops.com
+                <FiMail size={14} /> {settings.contact_email || 'hello@prakritipops.com'}
               </a>
               <a
-                href="tel:+919876543210"
+                href={`tel:${settings.contact_phone || '+919876543210'}`}
                 className="flex items-center gap-2 hover:text-primary-light transition-all duration-200"
               >
-                <FiPhone size={14} /> +91 98765 43210
+                <FiPhone size={14} /> {settings.contact_phone || '+91 98765 43210'}
               </a>
             </div>
             <div className="flex gap-4 mt-2">
