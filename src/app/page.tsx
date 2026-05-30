@@ -4,6 +4,7 @@ import { useLang } from '@/lib/locale'
 import { Button } from '@/components/ui/Button'
 import ProductGrid from '@/components/shop/ProductGrid'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { FiTruck, FiShield, FiSun, FiMapPin, FiStar, FiZap } from 'react-icons/fi'
 import { useEffect, useState } from 'react'
@@ -115,7 +116,7 @@ export default function HomePage() {
             >
               <div className="relative z-10">
                 <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl shadow-black/40 border-8 border-white/10">
-                  <img
+                  <Image
                     src="/images/makhana-1.jpg"
                     alt="Prakriti Pops Premium Roasted Makhana"
                     className="w-full h-full object-cover"
@@ -162,10 +163,10 @@ export default function HomePage() {
               className="relative"
             >
               <div className="aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl group">
-                <img
+                <Image
                   src="/images/bihar-fields.jpg"
                   alt="The fertile makhana fields of Mithila, Bihar"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   loading="lazy"
                   width={800}
                   height={1000}
