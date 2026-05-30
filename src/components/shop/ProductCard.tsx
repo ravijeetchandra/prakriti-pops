@@ -39,7 +39,7 @@ export default function ProductCard({ product, campaigns = [] }: ProductCardProp
       name_hi: product.name_hi,
       slug: product.slug,
       price: discounted ? displayPrice : product.price,
-      image: product.images[0] || `/api/placeholder?name=${encodeURIComponent(product.name_en)}`,
+      image: `/api/placeholder?name=${encodeURIComponent(product.name_en)}`,
       original_price: discounted ? product.price : undefined,
       campaign_id: campaign?.id ?? null,
     })
@@ -57,7 +57,7 @@ export default function ProductCard({ product, campaigns = [] }: ProductCardProp
 
         <div className="relative aspect-square overflow-hidden bg-cream-dark">
           <img
-            src={product.images[0] || `/api/placeholder?name=${encodeURIComponent(product.name_en)}`}
+            src={`/api/placeholder?name=${encodeURIComponent(product.name_en)}`}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
           />
