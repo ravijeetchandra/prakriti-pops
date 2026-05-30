@@ -117,7 +117,7 @@ export default function HomePage() {
               <div className="relative z-10">
                 <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl shadow-black/40 border-8 border-white/10">
                   <Image
-                    src="/images/makhana-1.jpg"
+                    src="/images/hero-main.jpg"
                     alt="Prakriti Pops Premium Roasted Makhana"
                     className="w-full h-full object-cover"
                     priority
