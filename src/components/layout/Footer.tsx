@@ -11,7 +11,7 @@ export default function Footer() {
   const [settings, setSettings] = useState({ contact_email: '', contact_phone: '' })
 
   useEffect(() => {
-    supabase.from('site_settings').select('contact_email,contact_phone').single().then(({ data }) => {
+    supabase.from('site_settings').select('contact_email,contact_phone').single().then(({ data }: { data: { contact_email: string; contact_phone: string } | null }) => {
       if (data) setSettings({ contact_email: data.contact_email, contact_phone: data.contact_phone })
     })
   }, [])
