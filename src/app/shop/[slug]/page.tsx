@@ -13,6 +13,7 @@ import { formatPrice } from '@/lib/helpers'
 import { useCampaigns, getProductCampaign, getCampaignPrice } from '@/lib/campaigns'
 import type { Product } from '@/lib/types'
 import { FiShoppingCart, FiMinus, FiPlus, FiZap } from 'react-icons/fi'
+import { getProductImage } from '@/lib/productImages'
 import Link from 'next/link'
 
 export default function ProductDetailPage() {
@@ -53,7 +54,7 @@ export default function ProductDetailPage() {
       name_hi: product.name_hi,
       slug: product.slug,
       price: discounted ? displayPrice : product.price,
-      image: `/api/placeholder?v=2&name=${encodeURIComponent(product.name_en)}`,
+      image: getProductImage(product.name_en),
       original_price: discounted ? product.price : undefined,
       campaign_id: campaign?.id ?? null,
     }, qty)
@@ -69,7 +70,7 @@ export default function ProductDetailPage() {
       <div className="grid md:grid-cols-2 gap-10">
         <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 shadow-lg">
           <img
-            src={`/api/placeholder?v=2&name=${encodeURIComponent(product.name_en)}`}
+            src={getProductImage(product.name_en)}
             alt={name}
             className="w-full h-full object-cover"
           />

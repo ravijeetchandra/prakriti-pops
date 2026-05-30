@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { formatPrice } from '@/lib/helpers'
 import Link from 'next/link'
 import { FiTrash2, FiMinus, FiPlus, FiShoppingBag, FiZap } from 'react-icons/fi'
+import { getProductImage } from '@/lib/productImages'
 import { motion } from 'framer-motion'
 
 export default function CartPage() {
@@ -62,7 +63,7 @@ export default function CartPage() {
                 <Card className="flex gap-6 p-6 bg-white border-none shadow-sm hover:shadow-md transition-shadow duration-300 group">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
                     <img
-                      src={`/api/placeholder?v=2&name=${encodeURIComponent(item.name_en)}`}
+                      src={getProductImage(item.name_en)}
                       alt={lang === 'hi' ? item.name_hi : item.name_en}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />

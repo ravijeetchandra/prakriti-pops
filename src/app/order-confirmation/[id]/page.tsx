@@ -11,6 +11,7 @@ import { formatPrice, getStatusColor, getStatusLabel } from '@/lib/helpers'
 import type { Order, OrderTimeline } from '@/lib/types'
 import Link from 'next/link'
 import { FiCheckCircle, FiTruck, FiPackage, FiClock, FiX } from 'react-icons/fi'
+import { getProductImage } from '@/lib/productImages'
 import { motion } from 'framer-motion'
 
 export default function OrderConfirmationPage() {
@@ -103,7 +104,7 @@ export default function OrderConfirmationPage() {
                 <div key={i} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
                     <img
-                      src={`/api/placeholder?v=2&name=${encodeURIComponent(item.name_en)}`}
+                      src={getProductImage(item.name_en)}
                       alt={item.name_en}
                       className="w-full h-full object-cover"
                     />

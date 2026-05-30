@@ -12,6 +12,7 @@ import type { Product } from '@/lib/types'
 import type { ActiveCampaign } from '@/lib/campaigns'
 import { getProductCampaign, getCampaignPrice } from '@/lib/campaigns'
 import { FiShoppingCart } from 'react-icons/fi'
+import { getProductImage } from '@/lib/productImages'
 
 interface ProductCardProps {
   product: Product
@@ -39,7 +40,7 @@ export default function ProductCard({ product, campaigns = [] }: ProductCardProp
       name_hi: product.name_hi,
       slug: product.slug,
       price: discounted ? displayPrice : product.price,
-      image: `/api/placeholder?v=2&name=${encodeURIComponent(product.name_en)}`,
+      image: getProductImage(product.name_en),
       original_price: discounted ? product.price : undefined,
       campaign_id: campaign?.id ?? null,
     })
@@ -57,7 +58,7 @@ export default function ProductCard({ product, campaigns = [] }: ProductCardProp
 
         <div className="relative aspect-square overflow-hidden bg-cream-dark">
           <img
-            src={`/api/placeholder?name=${encodeURIComponent(product.name_en)}&v=2`}
+            src={getProductImage(product.name_en)}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
           />
