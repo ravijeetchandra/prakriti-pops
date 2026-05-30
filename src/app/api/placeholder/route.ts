@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
 
 const productImageMap: Record<string, string> = {
   'peri peri': 'makhana-1.jpg',
@@ -42,35 +44,17 @@ export async function GET(request: NextRequest) {
     ? productImageMap[matchedKey]
     : imageFiles[[...name].reduce((acc, c) => acc + c.charCodeAt(0), 0) % imageFiles.length]
 
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#FAF7F2"/>
-      <stop offset="100%" stop-color="#F2EBE3"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#C49A3F"/>
-      <stop offset="100%" stop-color="#D4A373"/>
-    </linearGradient>
-  </defs>
-  <rect width="400" height="400" fill="url(#bg)" rx="24"/>
-  <circle cx="200" cy="160" r="80" fill="url(#accent)" opacity="0.12"/>
-  <circle cx="200" cy="160" r="55" fill="url(#accent)" opacity="0.18"/>
-  <text x="200" y="180" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="48" font-weight="bold" fill="#C49A3F">🍿</text>
-  <text x="200" y="280" text-anchor="middle" font-family="'Inter', system-ui, sans-serif" font-size="18" font-weight="600" fill="#5C4033">${escapeXml(name)}</text>
-  <rect x="140" y="300" width="120" height="2" rx="1" fill="#C49A3F" opacity="0.4"/>
-  <text x="200" y="340" text-anchor="middle" font-family="'Inter', system-ui, sans-serif" font-size="11" font-weight="400" fill="#8C7E74">Prakriti Pops</text>
-</svg>`
+  const imagePath = path.join(process.cwd(), 'public', 'images', imageFile)
 
-  return new NextResponse(svg, {
-    headers: {
-      'Content-Type': 'image/svg+xml',
-      'Cache-Control': 'public, max-age=31536000, immutable',
-    },
-  })
-}
-
-function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  try {
+    const buffer = fs.readFileSync(imagePath)
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type': 'image/jpeg',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    })
+  } catch {
+    return NextResponse.redirect(new URL(`/images/${imageFile}`, request.url))
+  }
 }
