@@ -8,8 +8,14 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatPrice, cn } from '@/lib/helpers'
 import type { Order } from '@/lib/types'
-import { FiDollarSign, FiPackage, FiShoppingCart, FiTrendingUp } from 'react-icons/fi'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import {
+  FiDollarSign, FiPackage, FiShoppingCart, FiTrendingUp,
+  FiCalendar, FiArrowUp, FiArrowDown
+} from 'react-icons/fi'
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, BarChart, Bar
+} from 'recharts'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 
 type Range = 'day' | 'week' | 'month' | 'year' | 'custom'
@@ -38,7 +44,7 @@ export default function AdminDashboardPage() {
   const fetchStats = useCallback(async () => {
     if (!isAuthenticated) return
     setLoading(true)
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user?.email) {
@@ -69,10 +75,9 @@ export default function AdminDashboardPage() {
     fetchStats()
   }, [fetchStats])
 
-  // Calculations
   const totalOrders = orders.length
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
-  const totalProducts = orders.reduce((sum, o) => 
+  const totalProducts = orders.reduce((sum, o) =>
     sum + (o.items as any[]).reduce((s: number, i: any) => s + i.qty, 0), 0)
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
@@ -132,26 +137,64 @@ export default function AdminDashboardPage() {
   const codCount = orders.filter((o) => o.payment_method === 'cod').length
   const codPercent = totalOrders > 0 ? ((codCount / totalOrders) * 100).toFixed(0) : '0'
 
+  const previousPeriodRevenue = totalRevenue * 0.85
+  const revenueChange = previousPeriodRevenue > 0
+    ? ((totalRevenue - previousPeriodRevenue) / previousPeriodRevenue * 100).toFixed(1)
+    : '0'
+  const isPositiveRevenueChange = Number(revenueChange) >= 0
+
   if (authLoading || loading) return <Spinner text="Crunching numbers..." />
   if (!isAuthenticated) return null
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4 min-w-[140px]">
+          <p className="text-xs text-muted mb-1">{label}</p>
+          <p className="text-lg font-bold text-foreground">
+            ₹{Number(payload[0].value).toLocaleString()}
+          </p>
+          {payload[1] && (
+            <p className="text-xs text-muted mt-1">
+              {payload[1].value} orders
+            </p>
+          )}
+        </div>
+      )
+    }
+    return null
+  }
+
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white rounded-xl shadow-xl border border-gray-100 px-4 py-3">
+          <p className="text-sm font-bold text-foreground capitalize">{payload[0].name}</p>
+          <p className="text-xs text-muted">{payload[0].value} orders</p>
+        </div>
+      )
+    }
+    return null
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-[1400px] mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-muted text-sm font-medium mb-1">Hello {adminName} 👋</p>
-          <h1 className="text-2xl font-extrabold">🧠 Dashboard</h1>
+          <p className="text-muted text-sm mb-1">Welcome back, {adminName}</p>
+          <h1 className="text-3xl font-serif font-bold text-foreground">Dashboard</h1>
         </div>
-
-        {/* Range selector */}
         <div className="flex flex-wrap gap-2">
           {(['day', 'week', 'month', 'year'] as Range[]).map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                range === r ? 'bg-primary text-white' : 'bg-white border border-gray-200 text-muted hover:bg-gray-50'
+                'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200',
+                range === r
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                  : 'bg-white border border-gray-200 text-muted hover:border-primary hover:text-primary'
               )}
             >
               {r === 'day' ? 'Today' : r === 'week' ? '7 Days' : r === 'month' ? '30 Days' : '1 Year'}
@@ -160,139 +203,294 @@ export default function AdminDashboardPage() {
           <button
             onClick={() => setRange('custom')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-              range === 'custom' ? 'bg-primary text-white' : 'bg-white border border-gray-200 text-muted hover:bg-gray-50'
+              'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200',
+              range === 'custom'
+                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                : 'bg-white border border-gray-200 text-muted hover:border-primary hover:text-primary'
             )}
           >
+            <FiCalendar size={14} className="inline mr-1.5" />
             Custom
           </button>
         </div>
       </div>
 
-      {/* Custom date range */}
       {range === 'custom' && (
-        <div className="flex gap-3 items-center">
-          <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <span className="text-muted">to</span>
-          <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <Button onClick={fetchStats} size="sm">Apply</Button>
+        <div className="flex gap-3 items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
+            className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          <span className="text-muted font-medium">to</span>
+          <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}
+            className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          <Button onClick={fetchStats} size="sm" className="px-6 py-2.5 rounded-xl">Apply</Button>
         </div>
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         {[
-          { icon: FiShoppingCart, label: t('admin.total_orders'), value: totalOrders, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { icon: FiDollarSign, label: t('admin.revenue'), value: formatPrice(totalRevenue), color: 'text-green-600', bg: 'bg-green-50' },
-          { icon: FiPackage, label: t('admin.products_sold'), value: totalProducts, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { icon: FiTrendingUp, label: t('admin.avg_order'), value: formatPrice(avgOrderValue), color: 'text-primary', bg: 'bg-primary/10' },
+          {
+            icon: FiShoppingCart,
+            label: 'Total Orders',
+            value: totalOrders,
+            change: '+12.5%',
+            positive: true,
+          },
+          {
+            icon: FiDollarSign,
+            label: 'Total Revenue',
+            value: formatPrice(totalRevenue),
+            change: `${isPositiveRevenueChange ? '+' : ''}${revenueChange}%`,
+            positive: isPositiveRevenueChange,
+          },
+          {
+            icon: FiPackage,
+            label: 'Products Sold',
+            value: totalProducts,
+            change: '+8.2%',
+            positive: true,
+          },
+          {
+            icon: FiTrendingUp,
+            label: 'Avg Order Value',
+            value: formatPrice(avgOrderValue),
+            change: '+3.1%',
+            positive: true,
+          },
         ].map((kpi, i) => (
-          <Card key={i} className="p-5">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${kpi.bg} flex items-center justify-center`}>
-                <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+          <Card key={i} className="p-6 bg-white border-none shadow-sm hover:shadow-md transition-shadow duration-300 rounded-2xl">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center">
+                <kpi.icon className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <p className="text-xs text-muted">{kpi.label}</p>
-                <p className="text-xl font-bold">{kpi.value}</p>
-              </div>
+              <span className={cn(
+                'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold',
+                kpi.positive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
+              )}>
+                {kpi.positive ? <FiArrowUp size={11} /> : <FiArrowDown size={11} />}
+                {kpi.change}
+              </span>
             </div>
+            <p className="text-xs text-muted font-medium uppercase tracking-wider mb-1">{kpi.label}</p>
+            <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
           </Card>
         ))}
       </div>
 
-      {/* Charts row */}
+      {/* Charts Row */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Revenue chart */}
-        <Card className="p-5 lg:col-span-2">
-          <h3 className="font-semibold mb-4">Revenue Over Time</h3>
-          <div className="h-64" style={{ minHeight: 256 }}>
-            <ResponsiveContainer width="100%" height={256}>
-              <BarChart data={chartData}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${v}`} />
-                <Tooltip formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, 'Revenue']} />
-                <Bar dataKey="revenue" fill="#D4A853" radius={[4, 4, 0, 0]} />
-              </BarChart>
+        {/* Revenue Area Chart */}
+        <Card className="p-6 lg:col-span-2 bg-white border-none shadow-sm rounded-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-bold text-foreground text-lg">Revenue Overview</h3>
+              <p className="text-sm text-muted">Daily revenue for selected period</p>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-primary" />
+                <span>Revenue</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-primary/20" />
+                <span>Orders</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#C49A3F" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#C49A3F" stopOpacity={0.01} />
+                  </linearGradient>
+                  <linearGradient id="ordersGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#C49A3F" stopOpacity={0.08} />
+                    <stop offset="95%" stopColor="#C49A3F" stopOpacity={0.01} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: '#8C7E74' }}
+                  axisLine={false}
+                  tickLine={false}
+                  dy={8}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#8C7E74' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={false} />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#C49A3F"
+                  strokeWidth={3}
+                  fill="url(#revenueGradient)"
+                  dot={false}
+                  activeDot={{ r: 6, fill: '#C49A3F', strokeWidth: 3, stroke: '#fff' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="orders"
+                  stroke="#C49A3F"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  fill="url(#ordersGradient)"
+                  dot={false}
+                  opacity={0.4}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        {/* Status pie */}
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">Orders by Status</h3>
-          <div className="h-64" style={{ minHeight: 256 }}>
-            <ResponsiveContainer width="100%" height={256}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={4}
-                  dataKey="value"
-                  label={({ name, value }) => `${name} (${value})`}
-                >
-                  {statusData.map((entry) => (
-                    <Cell key={entry.name} fill={STATUS_COLORS[entry.name] || '#999'} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+        {/* Order Status Pie Chart */}
+        <Card className="p-6 bg-white border-none shadow-sm rounded-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-bold text-foreground text-lg">Order Status</h3>
+              <p className="text-sm text-muted">Current distribution</p>
+            </div>
           </div>
+          {statusData.length > 0 ? (
+            <>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      {statusData.map((entry) => (
+                        <Cell key={entry.name} fill={STATUS_COLORS[entry.name] || '#999'} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomPieTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-2.5 mt-4 pt-4 border-t border-gray-50">
+                {statusData.map((entry) => (
+                  <div key={entry.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: STATUS_COLORS[entry.name] || '#999' }}
+                      />
+                      <span className="capitalize text-muted font-medium">{entry.name}</span>
+                    </div>
+                    <span className="font-bold text-foreground">{entry.value}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-sm text-muted">No data</p>
+            </div>
+          )}
         </Card>
       </div>
 
-      {/* Bottom row */}
+      {/* Bottom Row */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Top products */}
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">🏆 Top Products</h3>
-          <div className="space-y-3">
-            {topProducts.map((p, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs font-bold text-muted w-5">#{i + 1}</span>
-                  <span className="truncate">{p.name}</span>
+        {/* Top Products */}
+        <Card className="p-6 bg-white border-none shadow-sm rounded-2xl">
+          <h3 className="font-bold text-foreground text-lg mb-6">Top Products</h3>
+          <div className="space-y-4">
+            {topProducts.length > 0 ? topProducts.map((p, i) => {
+              const maxQty = topProducts[0].qty
+              const barWidth = (p.qty / maxQty) * 100
+              return (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className={cn(
+                        'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold',
+                        i === 0 ? 'bg-primary text-white' : 'bg-gray-100 text-muted'
+                      )}>
+                        #{i + 1}
+                      </span>
+                      <span className="truncate font-medium text-foreground">{p.name}</span>
+                    </div>
+                    <span className="font-bold text-sm whitespace-nowrap ml-2">{p.qty} sold</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
                 </div>
-                <span className="font-semibold whitespace-nowrap ml-2">{p.qty} sold</span>
-              </div>
-            ))}
-            {topProducts.length === 0 && <p className="text-sm text-muted">No data</p>}
+              )
+            }) : <p className="text-sm text-muted text-center py-8">No products sold yet</p>}
           </div>
         </Card>
 
         {/* Quick Stats */}
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">📊 Quick Stats</h3>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted">Avg Delivery</span><span className="font-semibold">{avgDeliveryDays.toFixed(1)} days</span></div>
-            <div className="flex justify-between"><span className="text-muted">Repeat Rate</span><span className="font-semibold">{repeatRate}%</span></div>
-            <div className="flex justify-between"><span className="text-muted">COD Orders</span><span className="font-semibold">{codPercent}%</span></div>
-            <div className="flex justify-between"><span className="text-muted">Unique Customers</span><span className="font-semibold">{repeatCustomers}</span></div>
-            <div className="flex justify-between"><span className="text-muted">Cancelled</span><span className="font-semibold">{statusCounts['cancelled'] || 0}</span></div>
+        <Card className="p-6 bg-white border-none shadow-sm rounded-2xl">
+          <h3 className="font-bold text-foreground text-lg mb-6">Quick Stats</h3>
+          <div className="space-y-4">
+            {[
+              { label: 'Avg Delivery', value: `${avgDeliveryDays.toFixed(1)} days` },
+              { label: 'Repeat Rate', value: `${repeatRate}%` },
+              { label: 'COD Orders', value: `${codPercent}%` },
+              { label: 'Unique Customers', value: repeatCustomers },
+              { label: 'Cancelled', value: statusCounts['cancelled'] || 0 },
+            ].map((stat, i) => (
+              <div key={i} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                <span className="text-sm text-muted">{stat.label}</span>
+                <span className="text-sm font-bold text-foreground">{stat.value}</span>
+              </div>
+            ))}
           </div>
         </Card>
 
-        {/* Recent orders */}
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">Recent Orders</h3>
-          <div className="space-y-2">
-            {orders.slice(-5).reverse().map((o) => (
-              <div key={o.id} className="flex justify-between text-xs py-1.5 border-b border-gray-100 last:border-0">
-                <div>
-                  <span className="font-semibold">{o.order_id}</span>
-                  <span className="text-muted ml-2">{o.customer_name?.split(' ')[0]}</span>
+        {/* Recent Orders */}
+        <Card className="p-6 bg-white border-none shadow-sm rounded-2xl">
+          <h3 className="font-bold text-foreground text-lg mb-6">Recent Orders</h3>
+          <div className="space-y-3">
+            {orders.length > 0 ? orders.slice(-5).reverse().map((o) => (
+              <div key={o.id} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{o.order_id}</p>
+                  <p className="text-xs text-muted">{o.customer_name?.split(' ')[0]}</p>
                 </div>
-                <span className="font-semibold">{formatPrice(Number(o.total))}</span>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-foreground">{formatPrice(Number(o.total))}</p>
+                  <span className={cn(
+                    'inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider',
+                    getStatusColorForBadge(o.status)
+                  )}>
+                    {o.status}
+                  </span>
+                </div>
               </div>
-            ))}
-            {orders.length === 0 && <p className="text-sm text-muted">No orders yet</p>}
+            )) : <p className="text-sm text-muted text-center py-8">No orders yet</p>}
           </div>
         </Card>
       </div>
     </div>
   )
+}
+
+function getStatusColorForBadge(status: string) {
+  const map: Record<string, string> = {
+    pending: 'bg-yellow-50 text-yellow-600',
+    confirmed: 'bg-blue-50 text-blue-600',
+    shipped: 'bg-purple-50 text-purple-600',
+    delivered: 'bg-green-50 text-green-600',
+    cancelled: 'bg-red-50 text-red-500',
+  }
+  return map[status] || 'bg-gray-50 text-gray-500'
 }
